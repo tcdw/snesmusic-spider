@@ -1,0 +1,11 @@
+{
+  "name": "snesmusic-spider",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:tcdw/snesmusic-spider.git",
+  "author": "tcdw <tcdw2011@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "jsdom": "^11.12.0"
+  }
+}
