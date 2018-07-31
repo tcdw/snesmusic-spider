@@ -1,5 +1,6 @@
 const { JSDOM } = require('jsdom');
 const { URL } = require('url');
+const fs = require('fs');
 
 /**
  * 读取某个节点前面的节点
@@ -20,6 +21,10 @@ const forwardNode = (node, amount) => {
 }
 
 (async () => {
+    const data = {
+        games: [],
+    };
+    console.log('正在抓取首页 ...');
     const homePage = await JSDOM.fromURL("http://snesmusic.org/v2/");
     const menu = homePage
         .window
@@ -31,6 +36,7 @@ const forwardNode = (node, amount) => {
         let subPage;
         let page = 0;
         do {
+            console.log(`正在抓取 ${subURL.searchParams.get('char')} 的第 ${page + 1} 页 ...`);
             subURL.searchParams.set('limit', page * 30);
             subPage = await JSDOM.fromURL(subURL.toString());
             const titleDOMs = subPage
@@ -39,7 +45,10 @@ const forwardNode = (node, amount) => {
                 .getElementById('contContainer')
                 .getElementsByTagName('b');
             for (let j = 0; j < titleDOMs.length; j++) {
-                console.log(titleDOMs[j].childNodes[0].textContent);
+                data.games.push({
+                    name: titleDOMs[j].childNodes[0].textContent,
+                    id: Number(new URL(titleDOMs[j].childNodes[0].href).searchParams.get('selected')),
+                });
             }
             page += 1;
         } while (subPage
@@ -50,4 +59,5 @@ const forwardNode = (node, amount) => {
             .textContent !== 'No results.'
         );
     }
+    fs.writeFileSync('./data.json', JSON.stringify(data, null, 4), { encoding: 'utf8' });
 })();
