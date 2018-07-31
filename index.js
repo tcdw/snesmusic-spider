@@ -1,6 +1,24 @@
 const { JSDOM } = require('jsdom');
 const { URL } = require('url');
 
+/**
+ * 读取某个节点前面的节点
+ * @param {Node} node
+ * @param {number} amount
+ */
+const forwardNode = (node, amount) => {
+    if (amount < 0) {
+        for (let i = 0; i < -amount; i++) {
+            node = node.previousSibling;
+        }
+    } else {
+        for (let i = 0; i < amount; i++) {
+            node = node.nextSibling;
+        }
+    }
+    return node;
+}
+
 (async () => {
     const homePage = await JSDOM.fromURL("http://snesmusic.org/v2/");
     const menu = homePage
