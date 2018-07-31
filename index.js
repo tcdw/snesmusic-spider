@@ -59,5 +59,9 @@ const forwardNode = (node, amount) => {
             .textContent !== 'No results.'
         );
     }
+    for (let i = 0; i < data.games.length; i++) {
+        const infoPage = await JSDOM.fromURL(`http://snesmusic.org/v2/profile.php?profile=set&selected=${data.games[i].id}`);
+        const infoTable = infoPage.window.document.querySelector('.gameinfo');
+    }
     fs.writeFileSync('./data.json', JSON.stringify(data, null, 4), { encoding: 'utf8' });
 })();
