@@ -4,28 +4,22 @@ const parallelLimit = require('run-parallel-limit');
 const fs = require('fs');
 
 const infoOrder = ['composer', 'developer', 'publisher', 'released', 'dumper', 'tagger'];
-/**
- * 读取某个节点前面的节点
- * @param {Node} node
- * @param {number} amount
- */
-const forwardNode = (node, amount) => {
-    if (amount < 0) {
-        for (let i = 0; i < -amount; i++) {
-            node = node.previousSibling;
-        }
-    } else {
-        for (let i = 0; i < amount; i++) {
-            node = node.nextSibling;
-        }
+
+const toKeyValues = (element) => {
+    const newElement = {};
+    for (let i = 0; i < element.length; i++) {
+        newElement[element[i][0]] = element[i][1];
     }
-    return node;
+    return newElement;
 }
 
 (async () => {
     const data = {
         games: [],
     };
+    const company = new Map();
+    const composer = new Map();
+    const dumper = new Map();
     console.log('正在抓取首页 ...');
     const homePage = await JSDOM.fromURL("http://snesmusic.org/v2/");
     const menu = homePage
@@ -74,13 +68,56 @@ const forwardNode = (node, amount) => {
                 data.games[i][infoOrder[j]] = infoTable[j].getElementsByTagName('td')[1].textContent;
             } else {
                 data.games[i][infoOrder[j]] = [];
-                const composerDOM = infoTable[j].getElementsByTagName('td')[1].getElementsByTagName('a');
-                for (let k = 0; k < composerDOM.length; k++) {
-                    const tempHref = new URL(composerDOM[k].href);
+                const infoDOM = infoTable[j].getElementsByTagName('td')[1].getElementsByTagName('a');
+                for (let k = 0; k < infoDOM.length; k++) {
+                    const tempHref = new URL(infoDOM[k].href);
                     if (tempHref.searchParams.get('selected')) {
-                        data.games[i][infoOrder[j]].push(Number(new URL(composerDOM[k].href).searchParams.get('selected')));
+                        const num = Number(new URL(infoDOM[k].href).searchParams.get('selected'));
+                        data.games[i][infoOrder[j]].push(num);
+                        switch (j) {
+                            case 0:
+                                composer.set(num, infoDOM[k].textContent);
+                                break;
+                            case 1:
+                            case 2:
+                                company.set(num, infoDOM[k].textContent);
+                                break;
+                            case 4:
+                            case 5:
+                                dumper.set(num, infoDOM[k].textContent);
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
+                // download info
+                const downloadDOM = infoPage
+                    .window
+                    .document
+                    .querySelector('.download');
+                data.games[i].setName = new URL(downloadDOM.href).searchParams.get('spcNow');
+                // relative info
+                const relative = infoPage
+                    .window
+                    .document
+                    .getElementById('contContainer')
+                    .getElementsByTagName('a');
+                let k = relative.length - 1;
+                data.games[i].relative = [];
+                while (relative[k].className !== 'download' && k >= 0) {
+                    if (new URL(relative[k].href).searchParams.get('selected')) {
+                        data.games[i].relative.push(Number(new URL(relative[k].href).searchParams.get('selected')));
+                    }
+                    k -= 1;
+                }
+                // region info
+                const region = infoPage
+                    .window
+                    .document
+                    .getElementById('contContainer')
+                    .getElementsByTagName('img')[0];
+                data.games[i].region = region.src.slice(39, -4);
             }
         }
     }
@@ -92,6 +129,9 @@ const forwardNode = (node, amount) => {
         }
     }
     parallelLimit(tasks, 12, () => {
+        data.company = toKeyValues(Array.from(company.entries()));
+        data.composer = toKeyValues(Array.from(composer.entries()));
+        data.dumper = toKeyValues(Array.from(dumper.entries()));
         fs.writeFileSync('./data.json', JSON.stringify(data, null, 4), { encoding: 'utf8' });
     });
 })();
