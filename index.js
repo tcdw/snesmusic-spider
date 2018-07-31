@@ -1,7 +1,9 @@
 const { JSDOM } = require('jsdom');
 const { URL } = require('url');
+const parallelLimit = require('run-parallel-limit');
 const fs = require('fs');
 
+const infoOrder = ['composer', 'developer', 'publisher', 'released', 'dumper', 'tagger'];
 /**
  * 读取某个节点前面的节点
  * @param {Node} node
@@ -59,9 +61,37 @@ const forwardNode = (node, amount) => {
             .textContent !== 'No results.'
         );
     }
-    for (let i = 0; i < data.games.length; i++) {
+    const runOne = async (i) => {
+        console.log(`(${i + 1} / ${data.games.length}) 正在抓取 ${data.games[i].name} 的元数据`);
         const infoPage = await JSDOM.fromURL(`http://snesmusic.org/v2/profile.php?profile=set&selected=${data.games[i].id}`);
-        const infoTable = infoPage.window.document.querySelector('.gameinfo');
+        const infoTable = infoPage
+            .window
+            .document
+            .querySelector('.gameinfo')
+            .getElementsByTagName('tr');
+        for (let j = 0; j < 6; j++) {
+            if (j === 3) {
+                data.games[i][infoOrder[j]] = infoTable[j].getElementsByTagName('td')[1].textContent;
+            } else {
+                data.games[i][infoOrder[j]] = [];
+                const composerDOM = infoTable[j].getElementsByTagName('td')[1].getElementsByTagName('a');
+                for (let k = 0; k < composerDOM.length; k++) {
+                    const tempHref = new URL(composerDOM[k].href);
+                    if (tempHref.searchParams.get('selected')) {
+                        data.games[i][infoOrder[j]].push(Number(new URL(composerDOM[k].href).searchParams.get('selected')));
+                    }
+                }
+            }
+        }
     }
-    fs.writeFileSync('./data.json', JSON.stringify(data, null, 4), { encoding: 'utf8' });
+    const tasks = [];
+    for (let i = 0; i < data.games.length; i++) {
+        tasks[i] = async (callback) => {
+            await runOne(i);
+            callback();
+        }
+    }
+    parallelLimit(tasks, 12, () => {
+        fs.writeFileSync('./data.json', JSON.stringify(data, null, 4), { encoding: 'utf8' });
+    });
 })();
