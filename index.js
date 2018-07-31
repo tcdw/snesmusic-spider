@@ -34,10 +34,10 @@ const forwardNode = (node, amount) => {
             subURL.searchParams.set('limit', page * 30);
             subPage = await JSDOM.fromURL(subURL.toString());
             const titleDOMs = subPage
-            .window
-            .document
-            .getElementById('contContainer')
-            .getElementsByTagName('b');
+                .window
+                .document
+                .getElementById('contContainer')
+                .getElementsByTagName('b');
             for (let j = 0; j < titleDOMs.length; j++) {
                 console.log(titleDOMs[j].childNodes[0].textContent);
             }
