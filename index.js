@@ -138,7 +138,7 @@ const toKeyValues = (element) => {
             });
         }
         // screen
-        if (fs.existsSync(`./screen/${setName}`)) {
+        if (!fs.existsSync(`./screen/${setName}.png`)) {
             console.log(`(${i + 1} / ${data.games.length}) 正在下载 ${data.games[i].name} 的插图`);
             const screen = infoPage.window.document.querySelector('.screen').src;
             await download(screen, 'screen').catch((e) => {
