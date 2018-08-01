@@ -138,12 +138,14 @@ const toKeyValues = (element) => {
             });
         }
         // screen
-        console.log(`(${i + 1} / ${data.games.length}) 正在下载 ${data.games[i].name} 的插图`);
-        const screen = infoPage.window.document.querySelector('.screen').src;
-        await download(screen, 'screen').catch((e) => {
-            console.log(`(${i + 1} / ${data.games.length}) 无法下载 ${data.games[i].name} 的插图，可能是因为该游戏根本没有插图。
+        if (fs.existsSync(`./screen/${setName}`)) {
+            console.log(`(${i + 1} / ${data.games.length}) 正在下载 ${data.games[i].name} 的插图`);
+            const screen = infoPage.window.document.querySelector('.screen').src;
+            await download(screen, 'screen').catch((e) => {
+                console.log(`(${i + 1} / ${data.games.length}) 无法下载 ${data.games[i].name} 的插图，可能是因为该游戏根本没有插图。
 错误详情：${e}`);
-        })
+            });
+        }
     }
     const tasks = [];
     for (let i = 0; i < data.games.length; i++) {
