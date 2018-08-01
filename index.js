@@ -2,6 +2,7 @@ const { JSDOM } = require('jsdom');
 const { URL } = require('url');
 const parallelLimit = require('run-parallel-limit');
 const fs = require('fs');
+const download = require('download');
 
 const infoOrder = ['composer', 'developer', 'publisher', 'released', 'dumper', 'tagger'];
 
@@ -136,6 +137,13 @@ const toKeyValues = (element) => {
                 length: new Date(`1970-01-01T00:${trackTimeDOM[j].textContent}.000Z`).getTime() / 1000,
             });
         }
+        // screen
+        console.log(`(${i + 1} / ${data.games.length}) 正在下载 ${data.games[i].name} 的插图`);
+        const screen = infoPage.window.document.querySelector('.screen').src;
+        await download(screen, 'screen').catch((e) => {
+            console.log(`(${i + 1} / ${data.games.length}) 无法下载 ${data.games[i].name} 的插图，可能是因为该游戏根本没有插图。
+错误详情：${e}`);
+        })
     }
     const tasks = [];
     for (let i = 0; i < data.games.length; i++) {
