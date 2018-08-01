@@ -91,34 +91,50 @@ const toKeyValues = (element) => {
                         }
                     }
                 }
-                // download info
-                const downloadDOM = infoPage
-                    .window
-                    .document
-                    .querySelector('.download');
-                data.games[i].setName = new URL(downloadDOM.href).searchParams.get('spcNow');
-                // relative info
-                const relative = infoPage
-                    .window
-                    .document
-                    .getElementById('contContainer')
-                    .getElementsByTagName('a');
-                let k = relative.length - 1;
-                data.games[i].relative = [];
-                while (relative[k].className !== 'download' && k >= 0) {
-                    if (new URL(relative[k].href).searchParams.get('selected')) {
-                        data.games[i].relative.push(Number(new URL(relative[k].href).searchParams.get('selected')));
-                    }
-                    k -= 1;
-                }
-                // region info
-                const region = infoPage
-                    .window
-                    .document
-                    .getElementById('contContainer')
-                    .getElementsByTagName('img')[0];
-                data.games[i].region = region.src.slice(39, -4);
             }
+        }
+        // download info
+        const downloadDOM = infoPage
+            .window
+            .document
+            .querySelector('.download');
+        data.games[i].setName = new URL(downloadDOM.href).searchParams.get('spcNow');
+        // relative info
+        const relative = infoPage
+            .window
+            .document
+            .getElementById('contContainer')
+            .getElementsByTagName('a');
+        let k = relative.length - 1;
+        data.games[i].relative = [];
+        while (relative[k].className !== 'download' && k >= 0) {
+            if (new URL(relative[k].href).searchParams.get('selected')) {
+                data.games[i].relative.push(Number(new URL(relative[k].href).searchParams.get('selected')));
+            }
+            k -= 1;
+        }
+        // region info
+        const region = infoPage
+            .window
+            .document
+            .getElementById('contContainer')
+            .getElementsByTagName('img')[0];
+        data.games[i].region = region.src.slice(39, -4);
+        // tracklist
+        const trackListDOM = infoPage
+            .window
+            .document
+            .querySelector('.tracklist');
+        const trackNumberDOM = trackListDOM.getElementsByClassName('tracknumber');
+        const trackTitleDOM = trackListDOM.getElementsByClassName('tracktitle');
+        const trackTimeDOM = trackListDOM.getElementsByClassName('tracktime');
+        data.games[i].trackList = [];
+        for (let j = 1; j < trackNumberDOM.length; j++) {
+            data.games[i].trackList.push({
+                number: trackNumberDOM[j].textContent,
+                title: trackTitleDOM[j].textContent,
+                length: new Date(`1970-01-01T00:${trackTimeDOM[j].textContent}.000Z`).getTime() / 1000,
+            });
         }
     }
     const tasks = [];
